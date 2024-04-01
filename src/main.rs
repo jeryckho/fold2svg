@@ -1,4 +1,5 @@
 use inquire::{error::InquireError, CustomType, Select};
+use std::fs;
 
 fn main() {
     interactive();
@@ -36,7 +37,11 @@ fn interactive_baggi() {
         .with_help_message("Entrez la largeur/hauteur en mm (séparateur .)")
         .prompt()
         .unwrap();
-    println!("{}", pattern_baggi(length, width));
+    fs::write(
+        format!(r#"Baggi-{}-{}.svg"#, length, width),
+        pattern_baggi(length, width),
+    )
+    .expect("Problème d'écriture");
 }
 
 fn interactive_masu() {
@@ -46,7 +51,11 @@ fn interactive_masu() {
         .with_help_message("Entrez la longueur en mm (séparateur .)")
         .prompt()
         .unwrap();
-    println!("{}", pattern_masu("Masu", length, length, length / 2.));
+    fs::write(
+        format!(r#"Masu-{}.svg"#, length),
+        pattern_masu("Masu", length, length, length / 2.),
+    )
+    .expect("Problème d'écriture");
 }
 
 fn interactive_masusoda() {
@@ -68,7 +77,11 @@ fn interactive_masusoda() {
         .with_help_message("Entrez la hauteur en mm (séparateur .)")
         .prompt()
         .unwrap();
-    println!("{}", pattern_masu("SodaMasu", length, width, height));
+    fs::write(
+        format!(r#"SodaMasu-{}-{}-{}.svg"#, length, width, height),
+        pattern_masu("SodaMasu", length, width, height),
+    )
+    .expect("Problème d'écriture");
 }
 
 fn interactive_vfold() {
@@ -84,7 +97,11 @@ fn interactive_vfold() {
         .with_help_message("Entrez l'épaisseur en mm (séparateur .)")
         .prompt()
         .unwrap();
-    println!("{}", pattern_vfold(width, thickness));
+    fs::write(
+        format!(r#"CardHolder-{}-{}.svg"#, width, thickness),
+        pattern_vfold(width, thickness),
+    )
+    .expect("Problème d'écriture");
 }
 
 fn pattern_vfold(width: f32, thickness: f32) -> String {
