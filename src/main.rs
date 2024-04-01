@@ -1,39 +1,95 @@
-use std::env;
+use inquire::{error::InquireError, CustomType, Select};
 
 fn main() {
-	// Récupération des arguments de la ligne de commande
-	let args: Vec<String> = env::args().collect();
+    interactive();
+}
 
-	// Vérification que deux arguments ont été fournis
-	if args.len() != 3 {
-		println!("Veuillez fournir exactement deux nombres en argument !");
-		return;
-	}
+fn interactive() {
+    let ans: Result<&str, InquireError> = Select::new(
+        "Quel modèle ?",
+        vec!["Baggi", "Masu", "Soda Masu", "Porte-Cartes"],
+    )
+    .prompt();
 
-	// Conversion des arguments en nombres
-	let width: f32 = match args[1].parse() {
-		Ok(num) => num,
-		Err(_) => {
-			println!("Le premier argument n'est pas un nombre valide !");
-			return;
-		}
-	};
-	let thickness: f32 = match args[2].parse() {
-		Ok(num) => num,
-		Err(_) => {
-			println!("Le deuxième argument n'est pas un nombre valide !");
-			return;
-		}
-	};
+    match ans {
+        Ok(choice) => match choice {
+            "Baggi" => interactive_baggi(),
+            "Masu" => interactive_masu(),
+            "Soda Masu" => interactive_masusoda(),
+            "Porte-Cartes" => interactive_vfold(),
+            _ => eprintln!("Merci de recommencer"),
+        },
+        Err(_) => eprintln!("Merci de recommencer"),
+    }
+}
 
-	// println!("{}", pattern_vfold(width, thickness));
-	pattern_vfold(width, thickness);
-	let res = pattern_masu("SodaMasu", 70., 70., 35.);
-	println!("{}", res);
+fn interactive_baggi() {
+    let length: f32 = CustomType::new("Longueur:")
+        .with_formatter(&|i: f32| format!("{i}"))
+        .with_error_message("Entrez un nombre valide")
+        .with_help_message("Entrez la longueur en mm (séparateur .)")
+        .prompt()
+        .unwrap();
+    let width: f32 = CustomType::new("Largeur/Hauteur:")
+        .with_formatter(&|i: f32| format!("{i}"))
+        .with_error_message("Entrez un nombre valide")
+        .with_help_message("Entrez la largeur/hauteur en mm (séparateur .)")
+        .prompt()
+        .unwrap();
+    println!("{}", pattern_baggi(length, width));
+}
+
+fn interactive_masu() {
+    let length: f32 = CustomType::new("Côté:")
+        .with_formatter(&|i: f32| format!("{i}"))
+        .with_error_message("Entrez un nombre valide")
+        .with_help_message("Entrez la longueur en mm (séparateur .)")
+        .prompt()
+        .unwrap();
+    println!("{}", pattern_masu("Masu", length, length, length / 2.));
+}
+
+fn interactive_masusoda() {
+    let length: f32 = CustomType::new("Longueur:")
+        .with_formatter(&|i: f32| format!("{i}"))
+        .with_error_message("Entrez un nombre valide")
+        .with_help_message("Entrez la longueur en mm (séparateur .)")
+        .prompt()
+        .unwrap();
+    let width: f32 = CustomType::new("Largeur:")
+        .with_formatter(&|i: f32| format!("{i}"))
+        .with_error_message("Entrez un nombre valide")
+        .with_help_message("Entrez la largeur en mm (séparateur .)")
+        .prompt()
+        .unwrap();
+    let height: f32 = CustomType::new("Hauteur:")
+        .with_formatter(&|i: f32| format!("{i}"))
+        .with_error_message("Entrez un nombre valide")
+        .with_help_message("Entrez la hauteur en mm (séparateur .)")
+        .prompt()
+        .unwrap();
+    println!("{}", pattern_masu("SodaMasu", length, width, height));
+}
+
+fn interactive_vfold() {
+    let width: f32 = CustomType::new("Largeur:")
+        .with_formatter(&|i: f32| format!("{i}"))
+        .with_error_message("Entrez un nombre valide")
+        .with_help_message("Entrez la largeur en mm (séparateur .)")
+        .prompt()
+        .unwrap();
+    let thickness: f32 = CustomType::new("Epaisseur:")
+        .with_formatter(&|i: f32| format!("{i}"))
+        .with_error_message("Entrez un nombre valide")
+        .with_help_message("Entrez l'épaisseur en mm (séparateur .)")
+        .prompt()
+        .unwrap();
+    println!("{}", pattern_vfold(width, thickness));
 }
 
 fn pattern_vfold(width: f32, thickness: f32) -> String {
-	return format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    return format!(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
 	xmlns="http://www.w3.org/2000/svg"
 	xmlns:svg="http://www.w3.org/2000/svg"
@@ -55,22 +111,23 @@ fn pattern_vfold(width: f32, thickness: f32) -> String {
 		/>
 	</g>
 </svg>"#,
-		h = width,
-		t = thickness,
-		l = 4. * width + 2. * thickness,
-		p1 = width - thickness,
-		p2 = width,
-		p3 = 2. * width + thickness,
-		p4 = 3. * width + thickness,
-		p5 = 3. * width + 2. * thickness
-	);
+        h = width,
+        t = thickness,
+        l = 4. * width + 2. * thickness,
+        p1 = width - thickness,
+        p2 = width,
+        p3 = 2. * width + thickness,
+        p4 = 3. * width + thickness,
+        p5 = 3. * width + 2. * thickness
+    );
 }
 
 fn pattern_masu(name: &str, length: f32, width: f32, height: f32) -> String {
-	let diag: f32 = 4. * height + width + length;
-	let r2 = f64::sqrt(2.) as f32;
-	let cote: f32 = diag / r2;
-	return format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    let diag: f32 = 4. * height + width + length;
+    let r2 = f64::sqrt(2.) as f32;
+    let cote: f32 = diag / r2;
+    return format!(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
 	xmlns="http://www.w3.org/2000/svg"
 	xmlns:svg="http://www.w3.org/2000/svg"
@@ -104,18 +161,66 @@ fn pattern_masu(name: &str, length: f32, width: f32, height: f32) -> String {
 		/>
 	</g>
 </svg>"#,
-		n = name,
-		c = cote,
-		h = height,
-		w = width,
-		l = length,
-		d = height * r2,
-		A = length / r2,
-		B = (length +2.*height)/r2,
-		C = (length+4.*height)/r2,
-		X = cote - (length+4.*height)/r2,
-		Y = cote - (length +2.*height)/r2,
-		Z = cote - length / r2,
-		s = 0.1
-	);
+        n = name,
+        c = cote,
+        h = height,
+        w = width,
+        l = length,
+        d = height * r2,
+        A = length / r2,
+        B = (length + 2. * height) / r2,
+        C = (length + 4. * height) / r2,
+        X = cote - (length + 4. * height) / r2,
+        Y = cote - (length + 2. * height) / r2,
+        Z = cote - length / r2,
+        s = 0.1
+    );
+}
+
+fn pattern_baggi(length: f32, width: f32) -> String {
+    return format!(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+	xmlns="http://www.w3.org/2000/svg"
+	xmlns:svg="http://www.w3.org/2000/svg"
+	id="Baggi-{l}x{w}" version="1.1"
+	width="{C}mm" height="{H}mm"
+	viewBox="0 0 {C} {H}">
+	<title>Baggi:{l}x{w}</title>
+	<g id="Decoupe">
+		<rect id="Bordure"
+			style="fill:none;stroke:black;stroke-width:{s}"
+			x="0" y="0"
+			width="{C}" height="{H}"
+		/>
+	</g>
+	<g id="Rainurage">
+		<path id="One"
+			d="M0,{y1} h{C} M0,{y2} h{C} M0,{y3} h{C}"
+			style="fill:none;stroke:blue;stroke-width:{s}"
+		/>
+		<path id="Two"
+			d="M0,0 l{w},{w} M0,{y1} l{w},{w} l-{w},{w} l{w},{w}"
+			style="fill:none;stroke:blue;stroke-width:{s}"
+		/>
+		<path id="Three"
+			d="M{C},0 l-{w},{w} M{C},{y1} l-{w},{w} l{w},{w} l-{w},{w}"
+			style="fill:none;stroke:blue;stroke-width:{s}"
+		/>
+		<path id="Four"
+			d="M{w},0 v{H} M{ww},0 v{H}"
+			style="fill:none;stroke:blue;stroke-width:{s}"
+		/>	
+	</g>
+</svg>"#,
+        s = 0.1,
+        l = length,
+        w = width,
+        H = 4. * width,
+        C = 2. * width + length,
+        ww = width + length,
+        y1 = width,
+        y2 = 2. * width,
+        y3 = 3. * width
+    );
 }
