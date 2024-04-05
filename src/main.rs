@@ -1,8 +1,115 @@
+use clap::{arg, Command};
 use inquire::{error::InquireError, CustomType, Select};
-use std::fs;
+use std::{env, fs};
 
 fn main() {
-    interactive();
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 1 {
+        cli();
+    } else {
+        interactive();
+    }
+}
+
+fn cli() {
+    let m = Command::new("fold2svg")
+        .subcommand(
+            Command::new("Baggi")
+                .short_flag('B')
+                .about("Création d'une boite de type Baggi")
+                .arg(
+                    arg!(-L --longueur <LONGUEUR> "Longueur du modèle en mm")
+                        .value_parser(clap::value_parser!(f32)),
+                )
+                .arg(
+                    arg!(-l --largeur <LARGEUR> "Largeur/hauteur du modèle en mm")
+                        .value_parser(clap::value_parser!(f32)),
+                ),
+        )
+        .subcommand(
+            Command::new("Masu")
+                .short_flag('M')
+                .about("Création d'une boite de type Masu")
+                .arg(
+                    arg!(-l --largeur <LARGEUR> "Largeur/Longueur du modèle en mm")
+                        .value_parser(clap::value_parser!(f32)),
+                ),
+        )
+        .subcommand(
+            Command::new("SodaMasu")
+                .about("Création d'une boite de type Soda Masu")
+                .short_flag('S')
+                .arg(
+                    arg!(-L --longueur <LONGUEUR> "Longueur du modèle en mm")
+                        .value_parser(clap::value_parser!(f32)),
+                )
+                .arg(
+                    arg!(-l --largeur <LARGEUR> "Largeur du modèle en mm")
+                        .value_parser(clap::value_parser!(f32)),
+                )
+                .arg(
+                    arg!(-H --hauteur <HAUTEUR> "Hauteur du modèle en mm")
+                        .value_parser(clap::value_parser!(f32)),
+                ),
+        )
+        .subcommand(
+            Command::new("PorteCartes")
+                .short_flag('P')
+                .about("Création d'un porte-cartes en V")
+                .arg(
+                    arg!(-l --largeur <LARGEUR> "Largeur/hauteur du modèle en mm")
+                        .value_parser(clap::value_parser!(f32)),
+                )
+                .arg(
+                    arg!(-e --epaisseur <EPAISSEUR> "Epaisseur du modèle en mm")
+                        .value_parser(clap::value_parser!(f32)),
+                ),
+        )
+        .get_matches();
+
+    match m.subcommand() {
+        Some(("Baggi", sub_m)) => {
+            let length: f32 = *sub_m.get_one("longueur").expect("La longueur est requise");
+            let width: f32 = *sub_m
+                .get_one("largeur")
+                .expect("La largeur/hauteur est requise");
+            fs::write(
+                format!(r#"Baggi-{}-{}.svg"#, length, width),
+                pattern_baggi(length, width),
+            )
+            .expect("Problème d'écriture");
+        }
+        Some(("Masu", sub_m)) => {
+            let length: f32 = *sub_m
+                .get_one("largeur")
+                .expect("La longueur/largeur est requise");
+            fs::write(
+                format!(r#"Masu-{}.svg"#, length),
+                pattern_masu("Masu", length, length, length / 2.),
+            )
+            .expect("Problème d'écriture");
+        }
+        Some(("SodaMasu", sub_m)) => {
+            let length: f32 = *sub_m.get_one("longueur").expect("La longueur est requise");
+            let width: f32 = *sub_m.get_one("largeur").expect("La largeur est requise");
+            let height: f32 = *sub_m.get_one("hauteur").expect("La hauteur est requise");
+            fs::write(
+                format!(r#"SodaMasu-{}-{}-{}.svg"#, length, width, height),
+                pattern_masu("SodaMasu", length, width, height),
+            )
+            .expect("Problème d'écriture");
+        }
+        Some(("PorteCartes", sub_m)) => {
+            let width: f32 = *sub_m.get_one("largeur").expect("La largeur est requise");
+            let thickness: f32 = *sub_m.get_one("epaisseur").expect("L'épaisseur est requise");
+            fs::write(
+                format!(r#"CardHolder-{}-{}.svg"#, width, thickness),
+                pattern_vfold(width, thickness),
+            )
+            .expect("Problème d'écriture");
+        }
+        _ => {} // Either no subcommand or one not tested for...
+    }
 }
 
 fn interactive() {
@@ -227,7 +334,7 @@ fn pattern_baggi(length: f32, width: f32) -> String {
 		<path id="Four"
 			d="M{w},0 v{H} M{ww},0 v{H}"
 			style="fill:none;stroke:blue;stroke-width:{s}"
-		/>	
+		/>
 	</g>
 </svg>"#,
         s = 0.1,
